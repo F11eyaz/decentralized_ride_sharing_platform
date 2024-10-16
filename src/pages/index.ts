@@ -1,0 +1,5 @@
+export * from './SignUp'
+export * from './SignIn'
+export * from './NotFoundPage'
+export * from './Profile'
+export * from './Home'
