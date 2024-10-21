@@ -43,3 +43,7 @@
 2) Sign In page
 ![Снимок экрана 2024-10-21 184117](https://github.com/user-attachments/assets/6fb85356-b935-40d3-bc66-3daebe580daf)
 
+3) Profile Page
+![Снимок экрана 2024-10-21 194738](https://github.com/user-attachments/assets/c9c9acc1-9dc9-489f-b549-d0d45a3159ad)
+
+
