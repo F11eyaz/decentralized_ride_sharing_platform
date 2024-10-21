@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Container, Paper, Box, TextField, Grid, Button, CircularProgress, Typography } from '@mui/material';
 import { initializeWeb3, getUser } from '../../services/ContractService'; // импортируем initializeWeb3 и getUser из ContractService
+import { useNavigate } from 'react-router-dom';
 
 interface VehicleDataI {
     model: string;
@@ -36,6 +37,15 @@ const Profile = () => {
     const [profileData, setProfileData] = useState<ProfileDataI>(initialProfileData);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const walletAddress = localStorage.getItem('walletAddress'); 
+        if (!walletAddress) {
+            navigate('/sign-in');
+        }
+    }, [navigate]);  
 
     useEffect(() => {
         // Здесь вызываем initializeWeb3, чтобы убедиться, что Web3 инициализирован

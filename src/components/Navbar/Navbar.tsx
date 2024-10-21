@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Link } from 'react-router-dom';  // Import Link from react-router-dom
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
@@ -12,18 +13,22 @@ import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import AdbIcon from '@mui/icons-material/Adb';
+import { useNavigate } from 'react-router-dom';
 
-const pages = ['Products', 'Pricing', 'Blog'];
-const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
+const pages = ['Главная', 'Карта'];
+const settings = ['Profile', 'Sign Up', 'Sign In', 'Logout'];
 
 const Navbar = () => {
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
 
-  const handleOpenNavMenu = (event: any) => {
+  const navigate = useNavigate()
+
+  const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
   };
-  const handleOpenUserMenu = (event: any) => {
+
+  const handleOpenUserMenu = (event) => {
     setAnchorElUser(event.currentTarget);
   };
 
@@ -35,6 +40,12 @@ const Navbar = () => {
     setAnchorElUser(null);
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('walletAddress'); 
+    navigate('/sign-in')
+  }
+  
+
   return (
     <AppBar position="static">
       <Container maxWidth="xl">
@@ -43,8 +54,7 @@ const Navbar = () => {
           <Typography
             variant="h6"
             noWrap
-            component="a"
-            href="#app-bar-with-responsive-menu"
+            component="div"
             sx={{
               mr: 2,
               display: { xs: 'none', md: 'flex' },
@@ -55,7 +65,7 @@ const Navbar = () => {
               textDecoration: 'none',
             }}
           >
-            LOGO
+            RSApp
           </Typography>
 
           <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
@@ -87,41 +97,29 @@ const Navbar = () => {
             >
               {pages.map((page) => (
                 <MenuItem key={page} onClick={handleCloseNavMenu}>
-                  <Typography sx={{ textAlign: 'center' }}>{page}</Typography>
+                  <Typography textAlign="center">{page}</Typography>
                 </MenuItem>
               ))}
             </Menu>
           </Box>
-          <AdbIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} />
-          <Typography
-            variant="h5"
-            noWrap
-            component="a"
-            href="#app-bar-with-responsive-menu"
-            sx={{
-              mr: 2,
-              display: { xs: 'flex', md: 'none' },
-              flexGrow: 1,
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              letterSpacing: '.3rem',
-              color: 'inherit',
-              textDecoration: 'none',
-            }}
-          >
-            LOGO
-          </Typography>
+
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-            {pages.map((page) => (
-              <Button
-                key={page}
-                onClick={handleCloseNavMenu}
-                sx={{ my: 2, color: 'white', display: 'block' }}
-              >
-                {page}
-              </Button>
-            ))}
+            <Button
+              component={Link}
+              to="/"
+              sx={{ my: 2, color: 'white', display: 'block' }}
+            >
+              Главная
+            </Button>
+            <Button
+              component={Link}
+              to="/map"
+              sx={{ my: 2, color: 'white', display: 'block' }}
+            >
+              Карта
+            </Button>
           </Box>
+
           <Box sx={{ flexGrow: 0 }}>
             <Tooltip title="Open settings">
               <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
@@ -144,16 +142,24 @@ const Navbar = () => {
               open={Boolean(anchorElUser)}
               onClose={handleCloseUserMenu}
             >
-              {settings.map((setting) => (
-                <MenuItem key={setting} onClick={handleCloseUserMenu}>
-                  <Typography sx={{ textAlign: 'center' }}>{setting}</Typography>
-                </MenuItem>
-              ))}
+              <MenuItem component={Link} to="/profile" onClick={handleCloseUserMenu}>
+                <Typography textAlign="center">Profile</Typography>
+              </MenuItem>
+              <MenuItem component={Link} to="/sign-up" onClick={handleCloseUserMenu}>
+                <Typography textAlign="center">Sign Up</Typography>
+              </MenuItem>
+              <MenuItem component={Link} to="/sign-in" onClick={handleCloseUserMenu}>
+                <Typography textAlign="center">Sign In</Typography>
+              </MenuItem>
+              <MenuItem onClick={handleLogout}>
+                <Typography textAlign="center">Logout</Typography>
+              </MenuItem>
             </Menu>
           </Box>
         </Toolbar>
       </Container>
     </AppBar>
   );
-}
+};
+
 export default Navbar;

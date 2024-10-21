@@ -42,10 +42,15 @@ const SignInCard = () => {
         const web3 = new Web3(window.ethereum);
         await window.ethereum.request({ method: 'eth_requestAccounts' });
         const accounts = await web3.eth.getAccounts();
-        setWalletAddress(accounts[0]);
-        console.log('Connected wallet address:', accounts[0]);
+        const address = accounts[0];
+        setWalletAddress(address);
+
+        // Store wallet address in localStorage
+        localStorage.setItem('walletAddress', address);
+
+        console.log('Connected wallet address:', address);
         window.location.href = '/profile';
-        return accounts[0];
+        return address;
       } catch (error) {
         console.error('MetaMask connection error:', error);
       }
@@ -59,7 +64,7 @@ const SignInCard = () => {
     try {
       const address = await connectMetaMask();  // Подключаем MetaMask и получаем адрес
       if (address) {
-        const user = await getUser(address);      // Получаем информацию о пользователе с контракта
+        const user = await getUser(address);    // Получаем информацию о пользователе с контракта
         if (user) {
           setUserData(user);  // Сохраняем данные пользователя
           console.log('User logged in:', user);
@@ -118,4 +123,3 @@ const SignInCard = () => {
 };
 
 export default SignInCard;
-
