@@ -30,11 +30,12 @@ contract RideSharing {
     }
 
     receive() external payable {}
-
     fallback() external payable {}
 
     mapping(address => User) public users; // Mapping to store all users
     Ride[] public rides;
+
+    address[] public driverAddresses; // Array to track driver addresses
 
     RideToken public rideToken;
 
@@ -42,7 +43,7 @@ contract RideSharing {
         rideToken = RideToken(tokenAddress);
     }
 
-    event RideRequested(address indexed passenger, address indexed driver, uint256 fare);
+    event RideRequested(address indexed passenger, address indexed driver, uint256 fare, uint256 rideIndex);
     event RideCompleted(address indexed passenger, address indexed driver, uint256 fare);
     event DriverRated(address indexed driver, uint8 rating);
     event PassengerRated(address indexed passenger, uint8 rating);
@@ -85,6 +86,7 @@ contract RideSharing {
                 _pricePerRide,
                 true // Drivers are initially available
             );
+            driverAddresses.push(msg.sender); // Add driver to driverAddresses array
         } else {
             users[msg.sender] = User(
                 payable(msg.sender),
@@ -131,18 +133,80 @@ contract RideSharing {
         isAvailable = user.isAvailable;
     }
 
-    function requestRide(address _driver) public {
-        require(users[_driver].isDriver && users[_driver].isAvailable, "Driver not available");
-        uint256 fare = users[_driver].pricePerRide;
+    // Get all available drivers
+    function getAvailableDrivers() public view returns (address[] memory) {
+        uint256 count = 0;
 
-        // Transfer tokens from passenger to contract
-        require(rideToken.transferFrom(msg.sender, address(this), fare), "Token transfer failed");
+        // Count available drivers
+        for (uint256 i = 0; i < driverAddresses.length; i++) {
+            if (users[driverAddresses[i]].isAvailable) {
+                count++;
+            }
+        }
 
-        // Create a new ride and store it
-        rides.push(Ride(msg.sender, _driver, fare, false));
-        
-        emit RideRequested(msg.sender, _driver, fare);
+        address[] memory availableDrivers = new address[](count);
+        uint256 index = 0;
+
+        // Populate the array with available drivers
+        for (uint256 i = 0; i < driverAddresses.length; i++) {
+            if (users[driverAddresses[i]].isAvailable) {
+                availableDrivers[index] = driverAddresses[i];
+                index++;
+            }
+        }
+
+        return availableDrivers;
     }
+
+    // Update user details (for both drivers and passengers)
+    function updateUserDetails(
+        string memory _firstName,
+        string memory _lastName,
+        string memory _phoneNumber,
+        bool _isDriver,
+        string memory _vehicleModel,
+        string memory _vehicleNumber,
+        string memory _vehicleColor,
+        uint16 _pricePerRide
+    ) public {
+        // Update common user details
+        users[msg.sender].firstName = _firstName;
+        users[msg.sender].lastName = _lastName;
+        users[msg.sender].phoneNumber = _phoneNumber;
+        users[msg.sender].isDriver = _isDriver;
+    
+        // If the user is a driver, update vehicle details and price per ride
+        if (_isDriver) {
+            users[msg.sender].vehicleDetails = Vehicle(_vehicleModel, _vehicleNumber, _vehicleColor);
+            users[msg.sender].pricePerRide = _pricePerRide;
+            users[msg.sender].isAvailable = true; // Set driver availability to true after update
+        } else {
+            // If the user is a passenger, reset driver-specific fields
+            users[msg.sender].vehicleDetails = Vehicle("", "", "");
+            users[msg.sender].pricePerRide = 0;
+            users[msg.sender].isAvailable = false; // Not relevant for passengers
+        }
+    }
+
+    function requestRide(address _driver) public {
+    require(users[_driver].isDriver && users[_driver].isAvailable, "Driver not available");
+
+    uint256 fare = users[_driver].pricePerRide;
+
+    // Ensure that the passenger has approved the contract to spend their tokens
+    uint256 allowance = rideToken.allowance(msg.sender, address(this));
+    require(allowance >= fare, "Insufficient allowance for transfer");
+
+    // Transfer tokens from passenger to the contract
+    require(rideToken.transferFrom(msg.sender, address(this), fare), "Token transfer failed");
+
+    // Create a new ride and store it
+    uint256 rideIndex = rides.length; // Store the index of the new ride
+    rides.push(Ride(msg.sender, _driver, fare, false));
+
+    emit RideRequested(msg.sender, _driver, fare, rideIndex); // Emit the ride index
+    }
+
 
     function completeRide(uint256 rideIndex) public onlyDriver {
         Ride storage ride = rides[rideIndex];
