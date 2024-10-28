@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { Box, Button, FormControl, TextField, Typography, Stack, Card as MuiCard, FormControlLabel, Switch } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { registerUser, initializeWeb3 } from '../../services/ContractService'; // Import contract service functions
 import Web3 from 'web3';
+import { toast } from 'react-toastify';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -42,6 +43,15 @@ const SignUpCard = () => {
     vehicleColor: '',
     pricePerRide: 0,
   });
+  const navigate = useNavigate()
+
+  React.useEffect(()=>{
+    const walletAddress = localStorage.getItem('walletAddress'); 
+        if (walletAddress) {
+            navigate('/');
+            toast.error("Вы уже авторизованы")
+        }
+  }, [walletAddress])
 
   // Connect MetaMask and initialize Web3
   const connectMetaMask = async () => {

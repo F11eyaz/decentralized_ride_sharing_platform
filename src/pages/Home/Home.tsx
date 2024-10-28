@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { AvailableDriversList } from "../../components";
 
 const Home = () => {
     const navigate = useNavigate();
@@ -12,7 +13,7 @@ const Home = () => {
     }, [navigate]);  
 
     return (
-        <h1>Not started home</h1>
+        <AvailableDriversList/>
     );
 };
 

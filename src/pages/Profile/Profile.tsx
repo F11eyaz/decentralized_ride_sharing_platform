@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Container, Paper, Box, TextField, Grid, Button, CircularProgress, Typography } from '@mui/material';
 import { initializeWeb3, getUser } from '../../services/ContractService'; // импортируем initializeWeb3 и getUser из ContractService
 import { useNavigate } from 'react-router-dom';
+import DriverAvailabilityToggle from '../../components/DriverAvailabilityToggle/DriverAvailabilityToggle';
 
 interface VehicleDataI {
     model: string;
@@ -37,13 +38,16 @@ const Profile = () => {
     const [profileData, setProfileData] = useState<ProfileDataI>(initialProfileData);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [ walletAddress, setWalletAddress ] = useState<any>(localStorage.getItem('walletAddress'))
 
     const navigate = useNavigate();
 
     useEffect(() => {
-        const walletAddress = localStorage.getItem('walletAddress'); 
+        // const walletAddress = localStorage.getItem('walletAddress'); 
+        setWalletAddress(localStorage.getItem('walletAddress'))
         if (!walletAddress) {
             navigate('/sign-in');
+
         }
     }, [navigate]);  
 
@@ -55,7 +59,7 @@ const Profile = () => {
                 await initializeWeb3();
 
                 // Fetch the user's data
-                const user = await getUser('0x0eb292d2D1dCfF50Eec4708B75e3B00c1A7b6a2F'); // Замените на реальный адрес пользователя
+                const user = await getUser(walletAddress); // Замените на реальный адрес пользователя
                 if (user) {
                     setProfileData({
                         id: 'user123', // ID можно извлечь по необходимости
@@ -117,8 +121,11 @@ const Profile = () => {
     }
 
     return (
-        <Container disableGutters component={Paper} elevation={4} sx={{ height: 'auto', minWidth: 0, mt: 2, padding: 4 }}>
+        <Container disableGutters maxWidth={false} component={Paper} elevation={4} sx={{ height: 'auto', minWidth: 0, mt: 2, padding: 4 }}>
             {/* Карточка для личных данных профиля */}
+
+            <DriverAvailabilityToggle/>
+            
             <Box
                 sx={{
                     display: 'flex',
@@ -127,11 +134,11 @@ const Profile = () => {
                     borderColor: 'divider',
                     borderWidth: 1,
                     borderStyle: 'solid',
-                    padding: 4,
+                    padding: 2,
                     mb: 6,
                 }}
             >
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="h6" mb={4}>
                     Profile Information
                 </Typography>
                 <Grid container spacing={2}>
@@ -161,7 +168,7 @@ const Profile = () => {
                     padding: 4,
                 }}
             >
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="h6" gutterBottom mb={4}>
                     Vehicle Information
                 </Typography>
                 <Grid container spacing={2}>

@@ -18,13 +18,13 @@ interface User {
 }
 
 // Контрактные адреса (замени на свои реальные адреса после деплоя)
-const rideSharingAddress = "0x97b28ec218B170B24569B4fCD2C5B6D265f01EdB";
-const rideTokenAddress = "0xDdFF2Ef12E80EaB2eB8Fd961cb5f7a5bf1Ebf888";
+const rideSharingAddress = "0x9c0D4906e8add7295aC62dC7e4aE048E37Ec3f93";
+const rideTokenAddress = "0xf83a108fefA722dA160e8f957a7B714614AfE3A3";
 
 // Глобальные переменные для провайдера и контрактов
-let web3: Web3 | undefined;
-let rideSharingContract: any;
-let rideTokenContract: any;
+export let web3: Web3 | undefined;
+export let rideSharingContract: any;
+export let rideTokenContract: any;
 
 // Инициализация Web3 и подключение к MetaMask
 export const initializeWeb3 = async (): Promise<void> => {
@@ -53,6 +53,18 @@ const ensureWeb3Initialized = () => {
   }
 };
 
+// Получение списка доступных водителей
+export const getAvailableDrivers = async (): Promise<string[]> => {
+  ensureWeb3Initialized(); // Проверяем, что Web3 и контракт инициализированы
+  try {
+    const drivers = await rideSharingContract.methods.getAvailableDrivers().call();
+    return drivers;
+  } catch (error) {
+    console.error('Error fetching available drivers: ', error);
+    throw error;
+  }
+};
+
 // Регистрация нового пользователя в контракте RideSharing
 export const registerUser = async (
   firstName: string,
@@ -74,6 +86,7 @@ export const registerUser = async (
     console.log('User registered successfully', tx);
   } catch (error) {
     console.error('Error registering user: ', error);
+    throw error;
   }
 };
 
@@ -87,6 +100,7 @@ export const requestRide = async (driverAddress: string): Promise<void> => {
     console.log('Ride requested successfully', tx);
   } catch (error) {
     console.error('Error requesting ride: ', error);
+    throw error;
   }
 };
 
@@ -100,6 +114,23 @@ export const completeRide = async (rideId: number): Promise<void> => {
     console.log('Ride completed successfully', tx);
   } catch (error) {
     console.error('Error completing ride: ', error);
+    throw error;
+  }
+};
+
+// services/ContractService.ts
+
+// Функция для установки доступности водителя
+export const setDriverAvailability = async (availability: boolean): Promise<void> => {
+  ensureWeb3Initialized(); // Проверяем, что Web3 и контракт инициализированы
+
+  try {
+    const accounts = await web3!.eth.getAccounts();
+    const tx = await rideSharingContract.methods.setDriverAvailability(availability).send({ from: accounts[0] });
+    console.log('Driver availability updated', tx);
+  } catch (error) {
+    console.error('Error setting driver availability: ', error);
+    throw error;
   }
 };
 
@@ -126,4 +157,6 @@ export const getUser = async (address: string): Promise<User | null> => {
     console.error('Error fetching user data: ', error);
     return null;
   }
+
+  
 };

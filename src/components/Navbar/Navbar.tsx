@@ -16,7 +16,7 @@ import AdbIcon from '@mui/icons-material/Adb';
 import { useNavigate } from 'react-router-dom';
 
 const pages = ['Главная', 'Карта'];
-const settings = ['Profile', 'Sign Up', 'Sign In', 'Logout'];
+// const settings = ['Profile', 'Sign Up', 'Sign In', 'Logout'];
 
 const Navbar = () => {
   const [anchorElNav, setAnchorElNav] = React.useState(null);
@@ -24,11 +24,11 @@ const Navbar = () => {
 
   const navigate = useNavigate()
 
-  const handleOpenNavMenu = (event) => {
+  const handleOpenNavMenu = (event: any) => {
     setAnchorElNav(event.currentTarget);
   };
 
-  const handleOpenUserMenu = (event) => {
+  const handleOpenUserMenu = (event: any) => {
     setAnchorElUser(event.currentTarget);
   };
 
@@ -47,7 +47,7 @@ const Navbar = () => {
   
 
   return (
-    <AppBar position="static">
+    <AppBar position="static" color='transparent'>
       <Container maxWidth="xl">
         <Toolbar disableGutters>
           <AdbIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }} />
@@ -107,16 +107,16 @@ const Navbar = () => {
             <Button
               component={Link}
               to="/"
-              sx={{ my: 2, color: 'white', display: 'block' }}
+              sx={{ my: 2, color: 'inherit', display: 'block' }}
             >
-              Главная
+              Home
             </Button>
             <Button
               component={Link}
               to="/map"
-              sx={{ my: 2, color: 'white', display: 'block' }}
+              sx={{ my: 2, color: 'inherit', display: 'block' }}
             >
-              Карта
+              Map
             </Button>
           </Box>
 
@@ -144,12 +144,6 @@ const Navbar = () => {
             >
               <MenuItem component={Link} to="/profile" onClick={handleCloseUserMenu}>
                 <Typography textAlign="center">Profile</Typography>
-              </MenuItem>
-              <MenuItem component={Link} to="/sign-up" onClick={handleCloseUserMenu}>
-                <Typography textAlign="center">Sign Up</Typography>
-              </MenuItem>
-              <MenuItem component={Link} to="/sign-in" onClick={handleCloseUserMenu}>
-                <Typography textAlign="center">Sign In</Typography>
               </MenuItem>
               <MenuItem onClick={handleLogout}>
                 <Typography textAlign="center">Logout</Typography>

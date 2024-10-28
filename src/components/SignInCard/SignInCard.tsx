@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { Box, Button, Typography, Stack, Card as MuiCard } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { initializeWeb3, getUser } from '../../services/ContractService'; // Импортируем сервисы для работы с контрактами
 import { Web3 } from 'web3';
+import { toast } from 'react-toastify';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -34,22 +35,35 @@ const SignInCard = () => {
   const [walletAddress, setWalletAddress] = React.useState('');
   const [userData, setUserData] = React.useState(null);
   const [isMetaMaskInstalled, setIsMetaMaskInstalled] = React.useState(true);
+  const navigate = useNavigate()
+
+  React.useEffect(()=>{
+    const walletAddress = localStorage.getItem('walletAddress'); 
+        if (walletAddress) {
+            navigate('/');
+            toast.error("Вы уже авторизованы")
+        }
+  }, [walletAddress])
 
   const connectMetaMask = async () => {
     if (typeof window.ethereum !== 'undefined') {
       try {
-        await initializeWeb3();  // Инициализируем Web3 и подключаем MetaMask
+        // Очищаем данные предыдущего пользователя перед подключением нового
+        setUserData(null);
+        setWalletAddress('');
+  
+        await initializeWeb3(); // Инициализируем Web3 и подключаем MetaMask
         const web3 = new Web3(window.ethereum);
         await window.ethereum.request({ method: 'eth_requestAccounts' });
         const accounts = await web3.eth.getAccounts();
         const address = accounts[0];
         setWalletAddress(address);
-
-        // Store wallet address in localStorage
+  
+        // Перезаписываем адрес в localStorage
         localStorage.setItem('walletAddress', address);
-
+  
         console.log('Connected wallet address:', address);
-        window.location.href = '/profile';
+        navigate('/profile');
         return address;
       } catch (error) {
         console.error('MetaMask connection error:', error);
@@ -59,23 +73,26 @@ const SignInCard = () => {
       console.error('MetaMask is not installed');
     }
   };
-
+  
   const handleSignIn = async () => {
     try {
-      const address = await connectMetaMask();  // Подключаем MetaMask и получаем адрес
+      const address = await connectMetaMask(); // Подключаем MetaMask и получаем адрес
       if (address) {
-        const user = await getUser(address);    // Получаем информацию о пользователе с контракта
+        const user = await getUser(address); // Получаем информацию о пользователе с контракта
         if (user) {
-          setUserData(user);  // Сохраняем данные пользователя
+          setUserData(user); // Сохраняем данные пользователя
           console.log('User logged in:', user);
         } else {
+          toast.error('Пользователь не найден.');
           console.log('User not found.');
         }
       }
     } catch (error) {
+      toast.error('Ошибка при входе.');
       console.error('Error during sign-in:', error);
     }
   };
+  
 
   return (
     <SignInContainer direction="column" justifyContent="space-between">
