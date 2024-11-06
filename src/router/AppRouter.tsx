@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { SignIn, NotFoundPage, Profile, Home, SignUp } from '../pages';
+import { SignIn, NotFoundPage, Profile, Home, SignUp, MapPage } from '../pages';
 import { Layout } from '../components';
 
 const AppRouter = () => {
@@ -13,6 +13,7 @@ const AppRouter = () => {
     { path: '/', element: <Home/> },
     // { path: 'map', element: <Map/> },
     { path: '/profile', element: <Profile /> },
+    // { path: '/map', element: <MapPage /> },
   ];
 
   return (

@@ -32,12 +32,11 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
 const SignUpCard = () => {
   const [walletAddress, setWalletAddress] = React.useState('');
   const [isMetaMaskInstalled, setIsMetaMaskInstalled] = React.useState(true);
-  const [isDriver, setIsDriver] = React.useState(false);
   const [formData, setFormData] = React.useState({
     firstName: '',
     lastName: '',
     phoneNumber: '',
-    isDriver: isDriver || false,
+    isDriver: false,
     vehicleModel: '',
     vehicleNumber: '',
     vehicleColor: '',
@@ -81,6 +80,7 @@ const SignUpCard = () => {
 
     try {
       const { firstName, lastName, phoneNumber, isDriver, vehicleModel, vehicleNumber, vehicleColor, pricePerRide } = formData;
+      console.log(formData)
 
       // Call contract service to register user
       await registerUser(firstName, lastName, phoneNumber, isDriver, vehicleModel, vehicleNumber, vehicleColor, pricePerRide);
@@ -128,7 +128,7 @@ const SignUpCard = () => {
           </FormControl>
 
           <FormControlLabel
-            control={<Switch checked={isDriver} onChange={(e) => setIsDriver(e.target.checked)} />}
+            control={<Switch checked={formData.isDriver} onChange={(e) => setFormData({...formData, isDriver: e.target.checked})} />}
             label="Are you a driver?"
           />
 
@@ -136,8 +136,8 @@ const SignUpCard = () => {
             fullWidth
             variant="contained"
             onClick={async () => {
-              await connectMetaMask(); // Подождите, пока MetaMask подключится
-              handleSignUp(); // После этого регистрируем пользователя
+              await connectMetaMask(); 
+              handleSignUp(); 
             }}
           >
             {walletAddress ? `Connected: ${walletAddress}` : 'Sign Up with MetaMask'}

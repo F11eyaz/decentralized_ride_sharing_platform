@@ -15,7 +15,12 @@ import MenuItem from '@mui/material/MenuItem';
 import AdbIcon from '@mui/icons-material/Adb';
 import { useNavigate } from 'react-router-dom';
 
-const pages = ['Главная', 'Карта'];
+const pages: any = [
+  {
+    label: "Home",
+    route: "/",
+  },
+]
 // const settings = ['Profile', 'Sign Up', 'Sign In', 'Logout'];
 
 const Navbar = () => {
@@ -95,9 +100,9 @@ const Navbar = () => {
               onClose={handleCloseNavMenu}
               sx={{ display: { xs: 'block', md: 'none' } }}
             >
-              {pages.map((page) => (
-                <MenuItem key={page} onClick={handleCloseNavMenu}>
-                  <Typography textAlign="center">{page}</Typography>
+              {pages.map((page: any) => (
+                <MenuItem key={page} onClick={()=>navigate(page.route)}>
+                  <Typography textAlign="center">{page.label}</Typography>
                 </MenuItem>
               ))}
             </Menu>
@@ -111,13 +116,7 @@ const Navbar = () => {
             >
               Home
             </Button>
-            <Button
-              component={Link}
-              to="/map"
-              sx={{ my: 2, color: 'inherit', display: 'block' }}
-            >
-              Map
-            </Button>
+            
           </Box>
 
           <Box sx={{ flexGrow: 0 }}>

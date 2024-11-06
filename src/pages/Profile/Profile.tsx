@@ -1,23 +1,30 @@
 import { useState, useEffect } from 'react';
 import { Container, Paper, Box, TextField, Grid, Button, CircularProgress, Typography } from '@mui/material';
-import { initializeWeb3, getUser } from '../../services/ContractService'; // импортируем initializeWeb3 и getUser из ContractService
+import { initializeWeb3, getUser, getBalance, updateUserDetails } from '../../services/ContractService';
 import { useNavigate } from 'react-router-dom';
 import DriverAvailabilityToggle from '../../components/DriverAvailabilityToggle/DriverAvailabilityToggle';
+import { rideTokenContract } from '../../services/ContractService';
+import { web3 } from '../../services/ContractService'
+import BuyTokensComponent from '../../components/BuyTokensComponent/BuyTokensComponent';
 
 interface VehicleDataI {
     model: string;
-    licensePlate: string;
+    vehicleNumber: string;
     color: string;
 }
 
-interface ProfileDataI {
+export interface ProfileDataI {
     id: string;
     fullName: string;
     phoneNumber: string;
     profilePictureUrl?: string;
     rating: number;
-    role: 'driver' | 'rider';
+    role: 'driver' | 'passenger';
     vehicle: VehicleDataI;
+    isAvailable: boolean;
+    balance: string;
+    tokenBalance: string;
+    pricePerRide: number;
 }
 
 const initialProfileData: ProfileDataI = {
@@ -29,51 +36,63 @@ const initialProfileData: ProfileDataI = {
     role: 'driver',
     vehicle: {
         model: 'Toyota Camry',
-        licensePlate: 'ABC1234',
+        vehicleNumber: '123ABC',
         color: 'White',
-    }
+    },
+    isAvailable: true,
+    balance: '0.00',
+    tokenBalance: '0.00',
+    pricePerRide: 0,
 };
-
 const Profile = () => {
     const [profileData, setProfileData] = useState<ProfileDataI>(initialProfileData);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [ walletAddress, setWalletAddress ] = useState<any>(localStorage.getItem('walletAddress'))
-
+    const [walletAddress, setWalletAddress] = useState(localStorage.getItem('walletAddress'));
     const navigate = useNavigate();
 
     useEffect(() => {
-        // const walletAddress = localStorage.getItem('walletAddress'); 
-        setWalletAddress(localStorage.getItem('walletAddress'))
+        setWalletAddress(localStorage.getItem('walletAddress'));
         if (!walletAddress) {
             navigate('/sign-in');
-
         }
-    }, [navigate]);  
+    }, [navigate]);
 
     useEffect(() => {
-        // Здесь вызываем initializeWeb3, чтобы убедиться, что Web3 инициализирован
         const loadUserData = async () => {
             try {
-                // Initialize Web3 and contracts
                 await initializeWeb3();
-
-                // Fetch the user's data
-                const user = await getUser(walletAddress); // Замените на реальный адрес пользователя
+                const user = await getUser(walletAddress);
                 if (user) {
-                    setProfileData({
-                        id: 'user123', // ID можно извлечь по необходимости
+                    setProfileData((prevState) => ({
+                        ...prevState,
+                        id: 'user123',
                         fullName: `${user.firstName} ${user.lastName}`,
                         phoneNumber: user.phoneNumber,
-                        profilePictureUrl: 'https://example.com/profile/johndoe.jpg', // URL также можно обновить
+                        profilePictureUrl: 'https://example.com/profile/johndoe.jpg',
                         rating: user.rating,
-                        role: user.isDriver ? 'driver' : 'rider',
+                        role: user.isDriver ? 'driver' : 'passenger',
                         vehicle: {
                             model: user.vehicleModel,
-                            licensePlate: user.vehicleNumber,
+                            vehicleNumber: user.vehicleNumber,
                             color: user.vehicleColor,
                         },
-                    });
+                        isAvailable: user.isAvailable,
+                        pricePerRide: user.pricePerRide,
+                    }));
+
+                    // const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+                    // const data = await response.json();
+                    // const ethToUsdRate = data.ethereum.usd;
+                    const balance = await getBalance(walletAddress);
+                    
+                    const tokenBalance = await rideTokenContract.methods.balanceOf(walletAddress).call();
+
+                    setProfileData((prevState) => ({
+                        ...prevState,
+                        balance: parseFloat(balance).toFixed(2),
+                        tokenBalance: parseFloat(web3.utils.fromWei(tokenBalance, 'ether')).toFixed(2),
+                    }));
                 }
             } catch (error) {
                 setError('Failed to load user data. Please try again later.');
@@ -84,22 +103,37 @@ const Profile = () => {
         };
 
         loadUserData();
-    }, []);
+    }, [walletAddress]);
 
-    // Функция для динамической генерации полей TextField
-    const renderTextFields = (data: any) => {
-        return Object.entries(data).map(([key, value]) => (
-            <Grid item xs={12} sm={6} key={key}>
-                <TextField
-                    label={key.charAt(0).toUpperCase() + key.slice(1)}
-                    name={key}
-                    value={value}
-                    fullWidth
-                    disabled
-                    type={typeof value === 'number' ? 'number' : 'text'}
-                />
-            </Grid>
-        ));
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setProfileData((prevData) => ({
+            ...prevData,
+            [name]: value,
+            vehicle: {
+                ...prevData.vehicle,
+                [name]: name in prevData.vehicle ? value : prevData.vehicle[name],
+            },
+        }));
+    };
+
+    const handleSave = async () => {
+        try {
+            await updateUserDetails(
+                profileData.fullName.split(' ')[0],
+                profileData.fullName.split(' ')[1],
+                profileData.phoneNumber,
+                profileData.role === 'driver',
+                profileData.vehicle.model,
+                profileData.vehicle.vehicleNumber,
+                profileData.vehicle.color,
+                profileData.pricePerRide
+            );
+            alert('Profile updated successfully!');
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            alert('Failed to update profile.');
+        }
     };
 
     if (isLoading) {
@@ -122,65 +156,100 @@ const Profile = () => {
 
     return (
         <Container disableGutters maxWidth={false} component={Paper} elevation={4} sx={{ height: 'auto', minWidth: 0, mt: 2, padding: 4 }}>
-            {/* Карточка для личных данных профиля */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+            {profileData.role === 'driver' && (
+                <DriverAvailabilityToggle profileData={profileData} setProfileData={setProfileData} />
+            )}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, gap:2 }}>
+                    <Paper elevation={4} sx={{ padding: 2 }}>Current balance: {profileData.balance} ETH</Paper>
+                    <Paper elevation={4} sx={{ padding: 2 }}>Token balance: {profileData.tokenBalance} RIDE</Paper>
+                    <BuyTokensComponent />
+            </Box>
+            </Box>
 
-            <DriverAvailabilityToggle/>
+            {/* Поля для редактирования информации доступны только для водителей */}
             
-            <Box
-                sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    borderRadius: 4,
-                    borderColor: 'divider',
-                    borderWidth: 1,
-                    borderStyle: 'solid',
-                    padding: 2,
-                    mb: 6,
-                }}
-            >
-                <Typography variant="h6" mb={4}>
-                    Profile Information
-                </Typography>
-                <Grid container spacing={2}>
-                    {/* Рендеринг полей профиля */}
-                    {renderTextFields({
-                        fullName: profileData.fullName,
-                        phoneNumber: profileData.phoneNumber,
-                        rating: profileData.rating,
-                    })}
-                </Grid>
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
-                    <Button variant="contained" disabled>
-                        Сохранить
-                    </Button>
-                </Box>
-            </Box>
+                <>
+                    {/* Поля для редактирования информации о цене за поездку */}
+                    <Box sx={{ mb: 4 }}>
+                        <Typography variant="h6" mb={2}>Profile Information</Typography>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    label="Full Name"
+                                    name="fullName"
+                                    value={profileData.fullName}
+                                    onChange={handleChange}
+                                    fullWidth
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    label="Phone Number"
+                                    name="phoneNumber"
+                                    value={profileData.phoneNumber}
+                                    onChange={handleChange}
+                                    fullWidth
+                                />
+                            </Grid>
+                            {profileData.role === 'driver' && (
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    label="Price Per Ride"
+                                    name="pricePerRide"
+                                    type="number"
+                                    value={profileData.pricePerRide}
+                                    onChange={handleChange}
+                                    fullWidth
+                                />
+                            </Grid>
+                            )}
+                        </Grid>
+                    </Box>
 
-            {/* Карточка для данных транспортного средства */}
-            <Box
-                sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    borderRadius: 4,
-                    borderColor: 'divider',
-                    borderWidth: 1,
-                    borderStyle: 'solid',
-                    padding: 4,
-                }}
-            >
-                <Typography variant="h6" gutterBottom mb={4}>
-                    Vehicle Information
-                </Typography>
-                <Grid container spacing={2}>
-                    {/* Рендеринг полей автомобиля */}
-                    {renderTextFields(profileData.vehicle)}
-                </Grid>
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
-                    <Button variant="contained" disabled>
-                        Сохранить
-                    </Button>
-                </Box>
-            </Box>
+                    {profileData.role === 'driver' && (
+                    <Box>
+                        <Typography variant="h6" mb={2}>Vehicle Information</Typography>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    label="Model"
+                                    name="model"
+                                    value={profileData.vehicle.model}
+                                    onChange={handleChange}
+                                    fullWidth
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    label="Vehicle Number"
+                                    name="vehicleNumber"
+                                    value={profileData.vehicle.vehicleNumber}
+                                    onChange={handleChange}
+                                    fullWidth
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    label="Color"
+                                    name="color"
+                                    value={profileData.vehicle.color}
+                                    onChange={handleChange}
+                                    fullWidth
+                                />
+                            </Grid>
+                        </Grid>
+                    </Box>
+                    )}
+
+                    {/* Кнопка для сохранения изменений */}
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4 }}>
+                        <Button variant="contained" onClick={handleSave}>
+                            Save Changes
+                        </Button>
+                    </Box>
+                </>
+            
         </Container>
     );
 };

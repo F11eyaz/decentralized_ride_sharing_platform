@@ -1,12 +1,15 @@
 import { AppRouter } from './router'
 import '../index.css';
+import { GPSProvider } from './context/GPSContext';
 
 
 function App() {
 
   return (
     <>
-      <AppRouter/>
+      <GPSProvider>
+        <AppRouter/>
+      </GPSProvider>
     </>
   )
 }

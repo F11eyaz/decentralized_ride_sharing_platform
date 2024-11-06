@@ -1,0 +1,1 @@
+export { default as RideDetailsCard } from './RideDetailsCard'

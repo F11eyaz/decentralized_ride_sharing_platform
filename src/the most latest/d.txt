@@ -1,0 +1,2 @@
+const rideSharingAddress = "0x2A946cA6b26E42f49817548bCb8413DA4A5316fF";
+const rideTokenAddress = "0xE1eCaff44D8F8bD315698b9FD1Ce1B4354ddC52D";
