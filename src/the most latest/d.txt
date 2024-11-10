@@ -1,2 +1,2 @@
-const rideSharingAddress = "0x2A946cA6b26E42f49817548bCb8413DA4A5316fF";
-const rideTokenAddress = "0xE1eCaff44D8F8bD315698b9FD1Ce1B4354ddC52D";
+const rideSharingAddress = "0x67b89B8c684eA1334e9f2D4CB2E14F78aaB6A042";
+const rideTokenAddress = "0x8519D9178F308a58aD892CE81564201964202f82";

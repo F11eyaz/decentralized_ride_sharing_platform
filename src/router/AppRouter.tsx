@@ -13,7 +13,7 @@ const AppRouter = () => {
     { path: '/', element: <Home/> },
     // { path: 'map', element: <Map/> },
     { path: '/profile', element: <Profile /> },
-    // { path: '/map', element: <MapPage /> },
+    { path: '/map', element: <MapPage /> },
   ];
 
   return (

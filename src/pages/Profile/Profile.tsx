@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Container, Paper, Box, TextField, Grid, Button, CircularProgress, Typography } from '@mui/material';
-import { initializeWeb3, getUser, getBalance, updateUserDetails } from '../../services/ContractService';
+import { initializeWeb3, getUser, getBalance, getTokenBalance, updateUserDetails } from '../../services/ContractService';
 import { useNavigate } from 'react-router-dom';
 import DriverAvailabilityToggle from '../../components/DriverAvailabilityToggle/DriverAvailabilityToggle';
 import { rideTokenContract } from '../../services/ContractService';
@@ -85,13 +85,12 @@ const Profile = () => {
                     // const data = await response.json();
                     // const ethToUsdRate = data.ethereum.usd;
                     const balance = await getBalance(walletAddress);
-                    
-                    const tokenBalance = await rideTokenContract.methods.balanceOf(walletAddress).call();
+                    const tokenBalance = await getTokenBalance(walletAddress);
 
                     setProfileData((prevState) => ({
                         ...prevState,
                         balance: parseFloat(balance).toFixed(2),
-                        tokenBalance: parseFloat(web3.utils.fromWei(tokenBalance, 'ether')).toFixed(2),
+                        tokenBalance: tokenBalance,
                     }));
                 }
             } catch (error) {

@@ -3,6 +3,7 @@ import { Card, CardContent, Typography, Divider, Button, Dialog, DialogActions, 
 import { getCurrentRide, completeRide, rateDriver } from '../../services/ContractService';
 import { toast } from 'react-toastify';
 import { io } from 'socket.io-client';
+import { useGPS } from '../../context/GPSContext';
 
 // Подключение к серверу
 const socket = io('http://localhost:3000');
@@ -39,6 +40,7 @@ const RideDetailsCard: React.FC<RideDetailsCardProps> = ({ userAddress }) => {
   const [loading, setLoading] = useState(false);
   const [openRateDialog, setOpenRateDialog] = useState(false);
   const [rating, setRating] = useState<number | null>(null);
+  const { location, otherLocations } = useGPS();
 
   useEffect(() => {
     const fetchRideDetails = async () => {
@@ -70,7 +72,7 @@ const RideDetailsCard: React.FC<RideDetailsCardProps> = ({ userAddress }) => {
 
       // Обновить статус поездки в UI
       setRideDetails({ ...rideDetails, completed: true });
-      setOpenRateDialog(true); // Открыть диалоговое окно для оценки водителя
+      // setOpenRateDialog(true); // Открыть диалоговое окно для оценки водителя
     } catch (error) {
       toast.error("Error completing ride");
       console.error(error);
@@ -112,6 +114,8 @@ const RideDetailsCard: React.FC<RideDetailsCardProps> = ({ userAddress }) => {
         <Typography variant="body1">Name: {rideDetails.passengerFirstName} {rideDetails.passengerLastName}</Typography>
         <Typography variant="body1">Phone: {rideDetails.passengerPhoneNumber}</Typography>
         <Typography variant="body1">Rating: {rideDetails.passengerRating}</Typography>
+        <Typography variant="body1">Latitude: {location.latitude}</Typography>
+        <Typography variant="body1">Longitude: {location.longitude}</Typography>
 
         <Divider sx={{ marginY: '16px' }} />
 
@@ -123,7 +127,8 @@ const RideDetailsCard: React.FC<RideDetailsCardProps> = ({ userAddress }) => {
         <Typography variant="body1">Rating: {rideDetails.driverRating}</Typography>
         <Typography variant="body1">Vehicle: {rideDetails.vehicleModel} ({rideDetails.vehicleColor})</Typography>
         <Typography variant="body1">Number: {rideDetails.vehicleNumber}</Typography>
-
+        <Typography variant="body1">Latitude: {otherLocations[0].latitude}</Typography>
+        <Typography variant="body1">Longitude: {otherLocations[0].longitude}</Typography>
         <Divider sx={{ marginY: '16px' }} />
 
         <Typography variant="body1">
@@ -134,7 +139,7 @@ const RideDetailsCard: React.FC<RideDetailsCardProps> = ({ userAddress }) => {
         </Typography>
 
         {/* Кнопка завершения поездки */}
-        {!rideDetails.completed && (
+        {! rideDetails.completed && (
           <Button 
             onClick={handleCompleteRide} 
             variant="contained" 

@@ -116,6 +116,14 @@ const Navbar = () => {
             >
               Home
             </Button>
+
+            <Button
+              component={Link}
+              to="/map"
+              sx={{ my: 2, color: 'inherit', display: 'block' }}
+            >
+              Map
+            </Button>
             
           </Box>
 

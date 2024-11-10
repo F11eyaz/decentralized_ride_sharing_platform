@@ -43,8 +43,8 @@ interface RideDetails {
 
 
 // Контрактные адреса (замени на свои реальные адреса после деплоя)
-const rideSharingAddress = "0x047A2Bed4949110d2306C70df8a760B9EC9005a3";
-const rideTokenAddress = "0x9D98BEcb767520Bc8fefF6aDa8f6bEf5D870638f";
+const rideSharingAddress = "0x11d94d3b2e1D224867BAE684Ba45aDEB74a594DF";
+const rideTokenAddress = "0xB9a2b9282b0A48f781A6c6900a1Bb4DaC5298bbE";
 
 // Глобальные переменные для провайдера и контрактов
 export let web3: Web3 | undefined;
@@ -144,14 +144,26 @@ export const completeRide = async (rideId: number): Promise<void> => {
   ensureWeb3Initialized();
   try {
     const accounts = await web3!.eth.getAccounts();
-    const tx = await rideSharingContract.methods.completeRide(rideId).send({ from: accounts[0] });
+    const driverAddress = accounts[0];
+    
+    // Проверим, что водитель является текущим пользователем, чтобы завершить поездку
+    const rideDetails = await getCurrentRide(driverAddress);
+    if (!rideDetails || rideDetails.rideIndex !== rideId || rideDetails.completed) {
+      toast.error('Ride not found or already completed');
+      return;
+    }
+
+    // Проверка и выполнение завершения поездки
+    const tx = await rideSharingContract.methods.completeRide(rideId).send({ from: driverAddress });
     console.log('Ride completed successfully', tx);
+    toast.success('Ride completed successfully!');
   } catch (error: any) {
     console.error('Error completing ride: ', error);
     toast.error(error.message);
     throw error;
   }
 };
+
 
 
 
@@ -324,3 +336,25 @@ export const rateDriver = async (driverAddress: string, rating: number): Promise
     throw error;
   }
 }
+
+export const getTokenBalance = async (address: string): Promise<string> => {
+  ensureWeb3Initialized(); // Проверяем, что Web3 и контракт инициализированы
+
+  try {
+    // Получаем баланс токенов в Wei через метод balanceOf
+    const tokenBalanceWei = await rideTokenContract.methods.balanceOf(address).call();
+
+    // Конвертируем из Wei в удобный формат токенов
+    const tokenBalance = web3.utils.fromWei(tokenBalanceWei, 'ether'); // Читаемый формат токенов (в строковом виде)
+
+    // Умножаем значение на 1e18 точно, без округлений
+    const tokenBalanceBigInt = BigInt(tokenBalance.replace('.', '')) * BigInt(10 ** (18 - tokenBalance.split('.')[1]?.length || 0));
+
+    console.log(`Token balance for ${address}: ${tokenBalanceBigInt} RIDE`);
+    
+    return `${tokenBalanceBigInt} RIDE`; // Возвращаем строку для удобного отображения
+  } catch (error) {
+    console.error("Error fetching token balance:", error);
+    throw error;
+  }
+};
